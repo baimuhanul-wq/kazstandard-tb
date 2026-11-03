@@ -592,7 +592,6 @@
     </div>
 
     <script>
-        // Staff data (167 staff members of KazStandard)
         let STAFF_DATA = [
             { dept: "Руководство", title: "Ген. дир.", name: "Сәулебай Мәлік Оралұлы" },
             { dept: "Руководство", title: "Первый зам. ген. дир.", name: "Хабиев Нурбек Ермекович" },
@@ -991,16 +990,13 @@
             }
         ];
 
-        // Global State & Cloud API configuration
         let completionRecords = {};
         let currentSlideIndex = 0;
         let selectedEmpObj = null;
         let isManagerAuthenticated = false;
         const MANAGER_PASSWORD = "2439";
 
-        // Public cloud storage integration via JSONbin.io free REST API endpoint
-        const CLOUD_BIN_ID = "679f227ee41b4d34e47e81d1"; // Shared public bin for KazStandard records
-        const CLOUD_API_URL = `https://api.jsonbin.io/v3/b/${CLOUD_BIN_ID}`;
+        const CLOUD_API_URL = "https://api.npoint.io/493e6eac02a1ebe106d2";
 
         window.onload = function() {
             loadLocalCache();
@@ -1008,7 +1004,6 @@
             populateDepartments();
             switchTab('employee');
 
-            // Periodic auto-sync every 15 seconds across all devices
             setInterval(() => {
                 syncWithCloud(false);
             }, 15000);
@@ -1045,22 +1040,18 @@
             if (statusText) statusText.innerText = "Синхронизация...";
 
             try {
-                const response = await fetch(CLOUD_API_URL + "/latest", {
-                    method: 'GET',
-                    headers: {
-                        'X-Master-Key': '$2a$10$C8qT9h5gX0Q3K4p8V5b22e9...public' // Public read key placeholder or direct read
-                    }
+                const response = await fetch(CLOUD_API_URL, {
+                    method: 'GET'
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
-                    if (data && data.record) {
-                        if (data.record.records) {
-                            completionRecords = { ...completionRecords, ...data.record.records };
+                    if (data) {
+                        if (data.records) {
+                            completionRecords = { ...completionRecords, ...data.records };
                         }
-                        if (data.record.staff && Array.isArray(data.record.staff)) {
-                            // Merge custom added staff
-                            data.record.staff.forEach(cloudEmp => {
+                        if (data.staff && Array.isArray(data.staff)) {
+                            data.staff.forEach(cloudEmp => {
                                 if (!STAFF_DATA.some(e => e.name === cloudEmp.name)) {
                                     STAFF_DATA.push(cloudEmp);
                                 }
@@ -1096,10 +1087,9 @@
                 };
 
                 const response = await fetch(CLOUD_API_URL, {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': '$2a$10$C8qT9h5gX0Q3K4p8V5b22e9...public'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
@@ -1305,19 +1295,19 @@
                     </td>
                     <td class="py-3 px-4 text-center">
                         <div class="flex items-center justify-center gap-1.5">
-                            <button onclick="openEditEmployeeModal('${item.name.replace(/'/g, "\\'")}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition" title="Редактировать ФИО / Должность">
+                            <button onclick="openEditEmployeeModal('${item.name.replace(/'/g, "\'")}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition" title="Редактировать ФИО / Должность">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
                             ${isPassed ? `
-                                <button onclick="togglePassedStatus('${item.name.replace(/'/g, "\\'")}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded transition" title="Отозвать отметку об ознакомлении">
+                                <button onclick="togglePassedStatus('${item.name.replace(/'/g, "\'")}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded transition" title="Отозвать отметку об ознакомлении">
                                     <i class="fa-solid fa-arrow-rotate-left"></i>
                                 </button>
                             ` : `
-                                <button onclick="manualMarkPassed('${item.name.replace(/'/g, "\\'")}')" class="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition" title="Отметить как ознакомленного">
+                                <button onclick="manualMarkPassed('${item.name.replace(/'/g, "\'")}')" class="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition" title="Отметить как ознакомленного">
                                     <i class="fa-solid fa-check"></i>
                                 </button>
                             `}
-                            <button onclick="deleteEmployee('${item.name.replace(/'/g, "\\'")}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition" title="Удалить сотрудника">
+                            <button onclick="deleteEmployee('${item.name.replace(/'/g, "\'")}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded transition" title="Удалить сотрудника">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
@@ -1625,8 +1615,9 @@
         }
 
         function exportToCSV() {
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += "№;ФИО работника;Год рождения;Должность;Подразделение;Статус ознакомления;Дата прохождения\n";
+            let csvContent = "data:text/csv;charset=utf-8,﻿";
+            csvContent += "№;ФИО работника;Год рождения;Должность;Подразделение;Статус ознакомления;Дата прохождения
+";
 
             STAFF_DATA.forEach((item, idx) => {
                 const rec = completionRecords[item.name] || {};
@@ -1635,7 +1626,8 @@
                 const birth = rec.birthYear || "—";
                 const status = isPassed ? "Ознакомлен" : "Не ознакомлен";
                 
-                csvContent += `${idx + 1};"${item.name}";"${birth}";"${item.title}";"${item.dept}";"${status}";"${date}"\n`;
+                csvContent += `${idx + 1};"${item.name}";"${birth}";"${item.title}";"${item.dept}";"${status}";"${date}"
+`;
             });
 
             const encodedUri = encodeURI(csvContent);
